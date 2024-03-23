@@ -1,10 +1,8 @@
 /* eslint-disable prettier/prettier */
 import { TenantBaseEntity } from '../../core/entities/tenant-base.entity';
 import { User } from '../../core/entities/internal';
-import { MultiORMColumn, MultiORMEntity } from '../../core/decorators/entity';
+import { MultiORMColumn, MultiORMEntity, MultiORMOneToOne } from '../../core/decorators/entity';
 import { MikroOrmProfileRepository } from './repository/mikro-orm-profile.repository';
-import { MikroOrmOneToOne } from '../../core/decorators/entity/relations/mikro-orm';
-import { TypeOrmOneToOne } from '../../core/decorators/entity/relations/type-orm';
 
 @MultiORMEntity('profile', { mikroOrmRepository: () => MikroOrmProfileRepository })
 export class Profile extends TenantBaseEntity {
@@ -18,13 +16,11 @@ export class Profile extends TenantBaseEntity {
     |--------------------------------------------------------------------------
     */
     // Profile is the inverse side of the relationship
-    @TypeOrmOneToOne(() => User, (user) => user.profile, {
-        onDelete: 'CASCADE'
-    })
-    @MikroOrmOneToOne(() => User, (user) => user.profile, {
+    @MultiORMOneToOne(() => User, (user) => user.profile, {
+        /** Database cascade action on delete. */
+        onDelete: 'CASCADE',
+        /** This column is a boolean flag indicating that this is the inverse side of the relationship, and it doesn't control the foreign key directly  */
         owner: false,
-        deleteRule: 'cascade',
-        mappedBy: (user) => user.profile
     })
     user!: User;
 }

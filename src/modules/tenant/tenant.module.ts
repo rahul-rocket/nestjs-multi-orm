@@ -13,13 +13,7 @@ import { Tenant } from './tenant.entity';
         MikroOrmModule.forFeature([Tenant]),
     ],
     controllers: [TenantController],
-    providers: [
-        TenantService,
-        TypeOrmTenantRepository
-    ],
-    exports: [
-        TypeOrmModule,
-        MikroOrmModule
-    ]
+    providers: [TenantService, TypeOrmTenantRepository],
+    exports: [TypeOrmModule, MikroOrmModule]
 })
 export class TenantModule { }

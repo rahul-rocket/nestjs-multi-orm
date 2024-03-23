@@ -1,10 +1,8 @@
 /* eslint-disable prettier/prettier */
 import { JoinColumn, RelationId, Index } from 'typeorm';
-import { Cascade, EntityRepositoryType } from '@mikro-orm/core';
+import { EntityRepositoryType } from '@mikro-orm/core';
 import { Exclude } from 'class-transformer';
-import { MultiORMColumn, MultiORMEntity, MultiORMManyToOne } from '../../core/decorators/entity';
-import { MikroOrmOneToOne } from '../../core/decorators/entity/relations/mikro-orm';
-import { TypeOrmOneToOne } from '../../core/decorators/entity/relations/type-orm';
+import { MultiORMColumn, MultiORMEntity, MultiORMManyToOne, MultiORMOneToOne } from '../../core/decorators/entity';
 import { BaseEntity } from "../../core/entities/base.entity";
 import { Profile, Role } from '../../core/entities/internal';
 import { MikroOrmUserRepository } from './repository/mikro-orm-user.repository';
@@ -54,15 +52,13 @@ export class User extends BaseEntity {
 	| @OneToOne
 	|--------------------------------------------------------------------------
 	*/
-	@TypeOrmOneToOne(() => Profile, (profile) => profile.user, {
+	@MultiORMOneToOne(() => Profile, (profile) => profile.user, {
+		/** If set to true then it means that related object can be allowed to be inserted or updated in the database. */
 		cascade: true,
-		onDelete: 'SET NULL'
-	})
-	@MikroOrmOneToOne(() => Profile, (profile) => profile.user, {
-		cascade: [Cascade.ALL],
-		deleteRule: 'set null',
-		owner: true,
-		joinColumn: 'profileId'
+		/** Database cascade action on delete. */
+		onDelete: 'SET NULL',
+		/** This column is a boolean flag indicating whether the current entity is the 'owning' side of a relationship.  */
+		owner: true
 	})
 	@JoinColumn()
 	profile?: Profile;
