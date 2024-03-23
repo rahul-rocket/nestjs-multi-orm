@@ -8,7 +8,6 @@ import {
 	Profile,
 	Contact,
 } from './internal';
-import { RoleSubscriber } from './subscribers';
 
 export const coreEntities = [
 	Tenant,
@@ -18,8 +17,4 @@ export const coreEntities = [
 	User,
 	Profile,
 	Contact
-];
-
-export const coreSubscribers = [
-	RoleSubscriber
 ];

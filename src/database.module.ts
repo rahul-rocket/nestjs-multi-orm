@@ -7,7 +7,8 @@ import { PostgreSqlDriver } from '@mikro-orm/postgresql';
 import { EntityCaseNamingStrategy } from '@mikro-orm/core';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
-import { coreEntities, coreSubscribers } from './core/entities';
+import { coreEntities } from './core/entities';
+import { coreSubscribers } from './core/entities/subscribers';
 
 @Module({
     imports: [

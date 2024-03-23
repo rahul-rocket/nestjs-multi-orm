@@ -5,7 +5,7 @@
 
 import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { DeepPartial, FindManyOptions, FindOneOptions, Repository } from 'typeorm';
-import { AssignOptions, CreateOptions, EntityRepository, RequiredEntityData, UpsertOptions, wrap } from '@mikro-orm/knex';
+import { AssignOptions, CreateOptions, RequiredEntityData, wrap } from '@mikro-orm/knex';
 import { MikroOrmBaseEntityRepository } from '../repository/mikro-orm-base-entity.repository';
 import { BaseEntity } from '../entities/base.entity';
 import { parseTypeORMFindToMikroOrm } from './crud.helper';
@@ -22,7 +22,7 @@ export enum MultiORMEnum {
 export abstract class CrudService<T extends BaseEntity> {
 	constructor(
 		protected readonly typeOrmRepository: Repository<T>,
-		protected readonly mikroOrmRepository: EntityRepository<T>
+		protected readonly mikroOrmRepository: MikroOrmBaseEntityRepository<T>,
 	) { }
 
 	/**
@@ -101,51 +101,45 @@ export abstract class CrudService<T extends BaseEntity> {
 	 * @returns The created or updated entity.
 	 */
 	public async create(
-		entity: IPartialEntity<T>,
+		data: IPartialEntity<T>,
 		createOptions: CreateOptions = {
+			/** This option disables the strict typing which requires all mandatory properties to have value, it has no effect on runtime */
+			partial: true,
 			/** Creates a managed entity instance instead, bypassing the constructor call */
 			managed: true
 		},
-		upsertOptions: UpsertOptions<T> = {
-			onConflictFields: ['id'], // specify a manual set of fields pass to the on conflict clause
-			onConflictExcludeFields: ['createdAt'],
-		},
 		assignOptions: AssignOptions = {
 			updateNestedEntities: false,
-			mergeObjectProperties: true,
-			onlyProperties: true
+			onlyOwnProperties: false
 		}
 	): Promise<T> {
 		try {
 			switch (this.ormType) {
 				case MultiORMEnum.MikroORM:
 					try {
-						// Returns the name of the entity associated with this repository.
-						const entityName = this.mikroOrmRepository.getEntityName();
+						if (data['id']) {
+							// Try to load the existing entity
+							const entity = await this.mikroOrmRepository.findOne(data['id']);
+							if (entity) {
+								// If the entity has an ID, perform an upsert operation
+								this.mikroOrmRepository.assign(entity, data as any, assignOptions);
+								await this.mikroOrmRepository.flush();
 
-						// Returns the underlying EntityManager instance from the repository.
-						const em = this.mikroOrmRepository.getEntityManager();
-
-						// Create a new entity using MikroORM
-						const newEntity = em.create(entityName, entity as RequiredEntityData<T>, createOptions);
-						// If the entity doesn't have an ID, it's new and should be persisted
-						if (!entity['id']) {
-							// Persisting the entities
-							await em.persistAndFlush(newEntity); // This will also persist the relations
-							return this.serialize(newEntity);
+								return this.serialize(entity);
+							}
 						}
+						// If the entity doesn't have an ID, it's new and should be persisted
+						// Create a new entity using MikroORM
+						const newEntity = this.mikroOrmRepository.create(data as RequiredEntityData<T>, createOptions);
 
-						console.log(upsertOptions);
-						// If the entity has an ID, perform an upsert operation
-						// This block will only be reached if the entity is existing
-						const upsertedEntity = await em.upsert(entityName, newEntity, upsertOptions);
-						console.log({ upsertedEntity });
-						return this.serialize(upsertedEntity);
+						// Persist new entity and flush
+						await this.mikroOrmRepository.persistAndFlush(newEntity); // This will also persist the relations
+						return this.serialize(newEntity);
 					} catch (error) {
-						console.error('Error during transaction:', error);
+						console.error('Error during mikro orm create crud transaction:', error);
 					}
 				case MultiORMEnum.TypeORM:
-					const newEntity = this.typeOrmRepository.create(entity as DeepPartial<T>);
+					const newEntity = this.typeOrmRepository.create(data as DeepPartial<T>);
 					return await this.typeOrmRepository.save(newEntity);
 				default:
 					throw new Error(`Not implemented for ${this.ormType}`);
