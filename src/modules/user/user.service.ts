@@ -1,20 +1,16 @@
 /* eslint-disable prettier/prettier */
 import { Injectable } from '@nestjs/common';
 import { IsNull, Not } from 'typeorm';
-import { EntityManager } from '@mikro-orm/core';
 import { CrudService } from '../../core/crud/crud.service';
 import { IFindManyOptions, IPartialEntity } from '../../core/crud/icrud';
-import { TypeOrmUserRepository } from './repository/type-orm-user.repository';
-import { MikroOrmUserRepository } from './repository/mikro-orm-user.repository';
+import { MikroOrmUserRepository, TypeOrmUserRepository } from './repository';
 import { User } from './user.entity';
-import { Profile } from '../profile/profile.entity';
 
 @Injectable()
 export class UserService extends CrudService<User> {
     constructor(
         readonly typeOrmUserRepository: TypeOrmUserRepository,
-        readonly mikroOrmUserRepository: MikroOrmUserRepository,
-        private readonly em: EntityManager
+        readonly mikroOrmUserRepository: MikroOrmUserRepository
     ) {
         super(typeOrmUserRepository, mikroOrmUserRepository);
     }
@@ -57,7 +53,7 @@ export class UserService extends CrudService<User> {
                         isActive: true,
                         isArchived: false,
                         hash: Not(IsNull()),
-                        employee: {
+                        profile: {
                             id: IsNull()
                         }
                     },
@@ -66,14 +62,14 @@ export class UserService extends CrudService<User> {
                         isActive: true,
                         isArchived: false,
                         hash: Not(IsNull()),
-                        employee: {
+                        profile: {
                             isActive: true, // If employees are inactive
                             isArchived: false
                         }
                     }
                 ],
                 relations: {
-                    employee: true,
+                    profile: true,
                     role: true
                 },
                 order: {

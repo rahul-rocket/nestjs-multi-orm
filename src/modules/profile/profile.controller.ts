@@ -15,6 +15,19 @@ export class ProfileController {
      */
     @Get()
     async findAll() {
-        return await this._profileService.findAll();
+        return await this._profileService.findAll({
+            relations: {
+                user: true
+            }
+        });
+    }
+
+    /**
+     * 
+     * @returns 
+     */
+    @Get('by-join')
+    async findAllByJoin() {
+        return await this._profileService.findAllByJoin();
     }
 }

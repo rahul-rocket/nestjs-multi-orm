@@ -91,21 +91,16 @@ export function mapOneToOneArgsForMikroORM<T, O>({ typeFunctionOrTarget, inverse
 
         // Handle array cascade options
         if (typeOrmOptions?.cascade instanceof Array) {
-            mikroORMCascade = typeOrmOptions.cascade.map((c) => {
-                switch (c) {
-                    case 'insert':
-                        return Cascade.PERSIST;
-                    case 'update':
-                        return Cascade.MERGE;
-                    case 'remove':
-                        return Cascade.REMOVE;
-                    case 'soft-remove':
-                    case 'recover':
-                        return null;
-                    default:
-                        return null;
-                }
-            }).filter((c) => c) as Cascade[];
+            // Define a mapping from TypeORM cascade options to MikroORM cascade options
+            const cascading: { [key: string]: Cascade | null } = {
+                'insert': Cascade.PERSIST,
+                'update': Cascade.MERGE,
+                'remove': Cascade.REMOVE,
+                'soft-remove': null,
+                'recover': null,
+            };
+
+            mikroORMCascade = typeOrmOptions.cascade.map((c: any) => cascading[c] || null).filter(Boolean) as Cascade[];
         }
     }
 
@@ -124,9 +119,11 @@ export function mapOneToOneArgsForMikroORM<T, O>({ typeFunctionOrTarget, inverse
         mikroOrmOptions.referenceColumnName = `id`;
     }
 
-    // Map inverseSideOrOptions based on the DB_ORM environment variable
-    if (process.env.DB_ORM === MultiORMEnum.MikroORM && mikroOrmOptions.owner) {
-        mikroOrmOptions.inversedBy = inverseSideOrOptions;
+    if (process.env.DB_ORM === MultiORMEnum.MikroORM) {
+        // Map inverseSideOrOptions based on the DB_ORM environment variable
+        if (mikroOrmOptions.owner && inverseSideOrOptions) {
+            mikroOrmOptions.mappedBy = inverseSideOrOptions;
+        }
     }
 
     return mikroOrmOptions as MikroORMRelationOptions<any, any>;

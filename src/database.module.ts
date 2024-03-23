@@ -35,7 +35,7 @@ import { coreSubscribers } from './core/entities/subscribers';
             subscribers: coreSubscribers,
             persistOnCreate: true,
             namingStrategy: EntityCaseNamingStrategy,
-            debug: ['query']
+            debug: ['query', 'query-params', 'schema', 'info']
         }),
     ],
     providers: [],

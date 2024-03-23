@@ -13,13 +13,9 @@ export class UserController {
     @Get()
     async findAll() {
         return await this._userService.findAll({
-            where: {
-                email: 'hoster@example-ever.co'
-            },
             relations: {
-                role: {
-                    rolePermissions: false
-                }
+                profile: true,
+                role: true
             }
         });
     }
