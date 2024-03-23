@@ -20,7 +20,7 @@ export class ProfileService extends CrudService<Profile> {
      */
     public async findAll(): Promise<{ items: Profile[]; total: number; }> {
         const query = this.typeOrmRepository.createQueryBuilder();
-        query.innerJoin(`${query.alias}.user`, 'user');
+        query.innerJoinAndSelect(`${query.alias}.user`, 'user');
         const [items, total] = await query.getManyAndCount();
         return { items, total };
     }

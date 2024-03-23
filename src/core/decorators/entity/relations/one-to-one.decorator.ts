@@ -1,6 +1,5 @@
 /* eslint-disable prettier/prettier */
 import { Cascade, EntityName, OneToOneOptions } from "@mikro-orm/core";
-import { RelationOptions as TypeOrmRelationOptions } from 'typeorm';
 import { omit } from 'underscore';
 import { ObjectUtils } from "../../../../core/util/object-utils";
 import { MikroORMInverseSide, TypeORMInverseSide, TypeORMRelationOptions, TypeORMTarget } from "./shared-types";
@@ -20,7 +19,7 @@ export interface MapOneToOneArgsForMikroORMOptions<T, O> {
     // The inverse side of the relationship or additional options if provided.
     inverseSideOrOptions?: InverseSide<T>;
     // The options for the OneToOne relationship.
-    options?: RelationOptions<T>;
+    options?: RelationOptions<T, O>;
     // The property key of the target entity.
     propertyKey?: string;
     // The target string (optional).
@@ -32,7 +31,7 @@ type MikroORMRelationOptions<T, O> = Omit<Partial<OneToOneOptions<T, O>>, 'casca
 
 type TargetEntity<T> = TypeORMTarget<T> | MikroORMTarget<T, any>;
 type InverseSide<T> = TypeORMInverseSide<T> & MikroORMInverseSide<T>;
-type RelationOptions<T> = MikroORMRelationOptions<T, any> & TypeORMRelationOptions & {
+type RelationOptions<T, O> = MikroORMRelationOptions<T, O> & TypeORMRelationOptions & {
     cascade?: Cascade[] | (boolean | ("update" | "insert" | "remove" | "soft-remove" | "recover")[]);
 };
 
@@ -44,23 +43,23 @@ type RelationOptions<T> = MikroORMRelationOptions<T, any> & TypeORMRelationOptio
  * @param options - Additional options for the One-to-One relationship.
  * @returns PropertyDecorator
  */
-export function MultiORMOneToOne<T>(
+export function MultiORMOneToOne<T, O>(
     typeFunctionOrTarget: TargetEntity<T>,
-    inverseSideOrOptions?: InverseSide<T> | RelationOptions<T>,
-    options?: RelationOptions<T>
+    inverseSideOrOptions?: InverseSide<T> | RelationOptions<T, O>,
+    options?: RelationOptions<T, O>
 ): PropertyDecorator {
     // Normalize parameters.
     let inverseSideProperty: InverseSide<T>;
 
     if (ObjectUtils.isObject(inverseSideOrOptions)) {
-        options = <RelationOptions<T>>inverseSideOrOptions;
+        options = <RelationOptions<T, O>>inverseSideOrOptions;
     } else {
         inverseSideProperty = inverseSideOrOptions as any;
     }
 
     return (target: any, propertyKey: string) => {
         // If options are not provided, initialize an empty object
-        if (!options) options = {} as RelationOptions<T>;
+        if (!options) options = {} as RelationOptions<T, O>;
 
         // Use TypeORM decorator for One-to-One
         TypeOrmOneToOne(typeFunctionOrTarget as TypeORMTarget<T>, inverseSideOrOptions as TypeORMInverseSide<T>, options as TypeORMRelationOptions)(target, propertyKey);
@@ -78,7 +77,7 @@ export function MultiORMOneToOne<T>(
  */
 export function mapOneToOneArgsForMikroORM<T, O>({ typeFunctionOrTarget, inverseSideOrOptions, options, propertyKey }: MapOneToOneArgsForMikroORMOptions<T, O>) {
     // Cast options to RelationOptions
-    const typeOrmOptions = options as TypeOrmRelationOptions;
+    const typeOrmOptions = options as RelationOptions<T, O>;
 
     // Initialize an array to store MikroORM cascade options
     let mikroORMCascade: Cascade[] = [];
@@ -114,11 +113,9 @@ export function mapOneToOneArgsForMikroORM<T, O>({ typeFunctionOrTarget, inverse
     const mikroOrmOptions: Partial<OneToOneOptions<T, any>> = {
         ...omit(options, 'onDelete', 'onUpdate') as Partial<OneToOneOptions<T, any>>,
         entity: typeFunctionOrTarget as (string | ((e?: any) => EntityName<T>)),
-        cascade: mikroORMCascade,
-        deleteRule: typeOrmOptions?.onDelete?.toLocaleLowerCase(),
-        updateRule: typeOrmOptions?.onUpdate?.toLocaleLowerCase(),
-        ...(typeOrmOptions?.nullable ? { nullable: typeOrmOptions?.nullable } : {}),
-        ...(typeOrmOptions?.lazy ? { lazy: typeOrmOptions?.lazy } : {}),
+        ...(mikroORMCascade.length ? { cascade: mikroORMCascade } : {}),
+        ...(typeOrmOptions?.onDelete ? { deleteRule: typeOrmOptions?.onDelete?.toLocaleLowerCase() } : {}),
+        ...(typeOrmOptions?.onUpdate ? { updateRule: typeOrmOptions?.onUpdate?.toLocaleLowerCase() } : {}),
     };
 
     // Set default joinColumn if not overwritten in options
@@ -128,12 +125,8 @@ export function mapOneToOneArgsForMikroORM<T, O>({ typeFunctionOrTarget, inverse
     }
 
     // Map inverseSideOrOptions based on the DB_ORM environment variable
-    if (process.env.DB_ORM == MultiORMEnum.MikroORM) {
-        if (mikroOrmOptions.owner === true) {
-            mikroOrmOptions.inversedBy = inverseSideOrOptions;
-        } else {
-            mikroOrmOptions.mappedBy = inverseSideOrOptions;
-        }
+    if (process.env.DB_ORM === MultiORMEnum.MikroORM && mikroOrmOptions.owner) {
+        mikroOrmOptions.inversedBy = inverseSideOrOptions;
     }
 
     return mikroOrmOptions as MikroORMRelationOptions<any, any>;
