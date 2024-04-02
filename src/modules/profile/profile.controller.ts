@@ -1,6 +1,8 @@
 /* eslint-disable prettier/prettier */
-import { Controller, Get } from '@nestjs/common';
+import { Controller, Get, Query } from '@nestjs/common';
 import { ProfileService } from './profile.service';
+import { Profile } from './profile.entity';
+import { IFindManyOptions } from '../../core/crud/icrud';
 
 @Controller('profiles')
 export class ProfileController {
@@ -26,8 +28,8 @@ export class ProfileController {
      * 
      * @returns 
      */
-    @Get('by-join')
-    async findAllByJoin() {
-        return await this._profileService.findAllByJoin();
+    @Get('find-by-query-builder')
+    async findAllByJoin(@Query() options: IFindManyOptions<Profile>) {
+        return await this._profileService.findAllByCreateQueryBuilder(options);
     }
 }
