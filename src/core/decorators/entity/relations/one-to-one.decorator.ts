@@ -2,7 +2,7 @@
 import { Cascade, EntityName, OneToOneOptions } from "@mikro-orm/core";
 import { omit } from 'underscore';
 import { ObjectUtils } from "../../../../core/util/object-utils";
-import { MikroORMInverseSide, TypeORMInverseSide, TypeORMRelationOptions, TypeORMTarget } from "./shared-types";
+import { MikroORMInverseSide, TypeORMInverseSide, TypeORMRelationOptions, TypeORMTarget, TypeOrmCascadeOption } from "./shared-types";
 import { TypeOrmOneToOne } from "./type-orm";
 import { MikroOrmOneToOne } from "./mikro-orm";
 import { MultiORMEnum } from "src/core/crud/crud.service";
@@ -32,7 +32,7 @@ type MikroORMRelationOptions<T, O> = Omit<Partial<OneToOneOptions<T, O>>, 'casca
 type TargetEntity<T> = TypeORMTarget<T> | MikroORMTarget<T, any>;
 type InverseSide<T> = TypeORMInverseSide<T> & MikroORMInverseSide<T>;
 type RelationOptions<T, O> = MikroORMRelationOptions<T, O> & TypeORMRelationOptions & {
-    cascade?: Cascade[] | (boolean | ("update" | "insert" | "remove" | "soft-remove" | "recover")[]);
+    cascade?: Cascade[] | TypeOrmCascadeOption;
 };
 
 /**
@@ -119,11 +119,9 @@ export function mapOneToOneArgsForMikroORM<T, O>({ typeFunctionOrTarget, inverse
         mikroOrmOptions.referenceColumnName = `id`;
     }
 
-    if (process.env.DB_ORM === MultiORMEnum.MikroORM) {
-        // Map inverseSideOrOptions based on the DB_ORM environment variable
-        if (mikroOrmOptions.owner && inverseSideOrOptions) {
-            mikroOrmOptions.mappedBy = inverseSideOrOptions;
-        }
+    // Map inverseSideOrOptions based on the DB_ORM environment variable
+    if (process.env.DB_ORM === MultiORMEnum.MikroORM && !mikroOrmOptions.owner) {
+        mikroOrmOptions.mappedBy = inverseSideOrOptions;
     }
 
     return mikroOrmOptions as MikroORMRelationOptions<any, any>;
