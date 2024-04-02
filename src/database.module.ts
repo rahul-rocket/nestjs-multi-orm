@@ -9,6 +9,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { coreEntities } from './core/entities';
 import { coreSubscribers } from './core/entities/subscribers';
+import { getLoggingMikroOptions, getLoggingOptions } from './database.helper';
 
 @Module({
     imports: [
@@ -19,6 +20,8 @@ import { coreSubscribers } from './core/entities/subscribers';
             database: process.env.DB_NAME || 'postgres',
             username: process.env.DB_USER || 'postgres',
             password: process.env.DB_PASS || 'root',
+            logging: getLoggingOptions(process.env.DB_LOGGING), // by default set to error only
+            logger: 'advanced-console',
             synchronize: process.env.DB_SYNCHRONIZE === 'true', // We are using migrations, synchronize should be set to false.
             uuidExtension: 'pgcrypto',
             entities: coreEntities,
@@ -35,7 +38,7 @@ import { coreSubscribers } from './core/entities/subscribers';
             subscribers: coreSubscribers,
             persistOnCreate: true,
             namingStrategy: EntityCaseNamingStrategy,
-            debug: ['query', 'query-params', 'schema', 'info']
+            debug: getLoggingMikroOptions(process.env.DB_LOGGING) // by default set to false only
         }),
     ],
     providers: [],
