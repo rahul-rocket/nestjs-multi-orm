@@ -20,12 +20,12 @@
 		"test:e2e": "jest --config ./test/jest-e2e.json"
 	},
 	"dependencies": {
-		"@mikro-orm/cli": "^6.1.11",
-		"@mikro-orm/core": "^6.1.11",
-		"@mikro-orm/knex": "^6.1.11",
-		"@mikro-orm/migrations": "^6.1.11",
+		"@mikro-orm/cli": "^6.2.1",
+		"@mikro-orm/core": "^6.2.1",
+		"@mikro-orm/knex": "^6.2.1",
+		"@mikro-orm/migrations": "^6.2.1",
 		"@mikro-orm/nestjs": "^5.2.3",
-		"@mikro-orm/postgresql": "^6.1.11",
+		"@mikro-orm/postgresql": "^6.2.1",
 		"@nestjs/common": "^10.3.4",
 		"@nestjs/core": "^10.3.4",
 		"@nestjs/platform-express": "^10.3.4",
