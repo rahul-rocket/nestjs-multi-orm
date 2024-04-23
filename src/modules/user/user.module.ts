@@ -16,16 +16,8 @@ import { TypeOrmUserRepository } from './repository/type-orm-user.repository';
         TypeOrmModule.forFeature([User]),
         MikroOrmModule.forFeature([User]),
     ],
-    controllers: [
-        UserController
-    ],
-    providers: [
-        UserService,
-        TypeOrmUserRepository
-    ],
-    exports: [
-        TypeOrmModule,
-        MikroOrmModule
-    ]
+    controllers: [UserController],
+    providers: [UserService, TypeOrmUserRepository],
+    exports: [TypeOrmModule, MikroOrmModule]
 })
 export class UserModule { }

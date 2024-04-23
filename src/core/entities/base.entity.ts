@@ -24,7 +24,7 @@ export abstract class BaseEntity extends Model {
 		// Automatically set the property value when entity gets created, executed during flush operation.
 		onCreate: () => new Date()
 	})
-	createdAt?: Date = new Date();
+	createdAt?: Date;
 
 	// Date when the record was last updated
 	@UpdateDateColumn()
@@ -34,7 +34,7 @@ export abstract class BaseEntity extends Model {
 		// Automatically update the property value every time entity gets updated, executed during flush operation.
 		onUpdate: () => new Date()
 	})
-	updatedAt?: Date = new Date();
+	updatedAt?: Date;
 
 	// Soft Delete
 	@DeleteDateColumn()

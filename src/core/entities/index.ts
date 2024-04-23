@@ -5,8 +5,8 @@ import {
 	Role,
 	RolePermission,
 	User,
-	Profile,
 	Contact,
+	Tag
 } from './internal';
 
 export const coreEntities = [
@@ -15,6 +15,6 @@ export const coreEntities = [
 	Role,
 	RolePermission,
 	User,
-	Profile,
-	Contact
+	Contact,
+	Tag
 ];

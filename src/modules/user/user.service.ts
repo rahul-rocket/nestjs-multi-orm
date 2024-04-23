@@ -1,7 +1,7 @@
 /* eslint-disable prettier/prettier */
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { IsNull, Not } from 'typeorm';
-import { CrudService } from '../../core/crud/crud.service';
+import { CrudService, MultiORMEnum } from '../../core/crud/crud.service';
 import { IFindManyOptions, IPartialEntity } from '../../core/crud/icrud';
 import { MikroOrmUserRepository, TypeOrmUserRepository } from './repository';
 import { User } from './user.entity';
@@ -79,6 +79,28 @@ export class UserService extends CrudService<User> {
             console.log({ user });
         } catch (error) {
             console.log(error);
+        }
+    }
+
+    /**
+    * 
+    */
+    async delete(id: string) {
+        try {
+            switch (this.ormType) {
+                case MultiORMEnum.MikroORM:
+                    const entity = await this.mikroOrmUserRepository.findOne({ id });
+                    const em = this.mikroOrmUserRepository.getEntityManager();
+                    await em.removeAndFlush(entity);
+                    return this.serialize(entity);
+                case MultiORMEnum.TypeORM:
+                    return await this.typeOrmUserRepository.delete(id);
+                default:
+                    throw new Error(`Not implemented for ${this.ormType}`);
+            }
+        } catch (error) {
+            console.log(error);
+            throw new NotFoundException(`The record was not found`, error);
         }
     }
 }

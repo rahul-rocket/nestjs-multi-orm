@@ -1,13 +1,18 @@
 /* eslint-disable prettier/prettier */
-import { JoinColumn, RelationId, Index } from 'typeorm';
+import { JoinColumn, RelationId, Index, JoinTable } from 'typeorm';
 import { EntityRepositoryType } from '@mikro-orm/core';
 import { Exclude } from 'class-transformer';
-import { MultiORMColumn, MultiORMEntity, MultiORMManyToOne, MultiORMOneToOne } from '../../core/decorators/entity';
+import { SoftDeletable } from 'mikro-orm-soft-delete';
+import { EmbeddedColumn, MultiORMColumn, MultiORMEntity, MultiORMManyToOne } from '../../core/decorators/entity';
 import { BaseEntity } from "../../core/entities/base.entity";
-import { Profile, Role } from '../../core/entities/internal';
+import { Role, Tag } from '../../core/entities/internal';
+import { CustomFields } from '../../core/entities/custom-entity-fields';
 import { MikroOrmUserRepository } from './repository/mikro-orm-user.repository';
+import { TypeOrmManyToMany } from 'src/core/decorators/entity/relations/type-orm';
+import { MikroOrmManyToMany } from 'src/core/decorators/entity/relations/mikro-orm';
 
 @MultiORMEntity('user', { mikroOrmRepository: () => MikroOrmUserRepository })
+@SoftDeletable(() => User, "deletedAt", () => new Date())
 export class User extends BaseEntity {
 
 	// to allow inference in `em.getRepository()`
@@ -29,6 +34,11 @@ export class User extends BaseEntity {
 	@MultiORMColumn({ nullable: true })
 	hash?: string;
 
+	/*
+	|--------------------------------------------------------------------------
+	| @ManyToOne
+	|--------------------------------------------------------------------------
+	*/
 	@MultiORMManyToOne(() => Role, {
 		/** Indicates if relation column value can be nullable or not. */
 		nullable: true,
@@ -37,7 +47,7 @@ export class User extends BaseEntity {
 		onDelete: 'SET NULL'
 	})
 	@JoinColumn()
-	role!: Role;
+	role?: Role;
 
 	/**
 	 * 
@@ -47,21 +57,26 @@ export class User extends BaseEntity {
 	@MultiORMColumn({ nullable: true, relationId: true })
 	roleId?: string;
 
+	// /*
+	// |--------------------------------------------------------------------------
+	// | @ManyToMany
+	// |--------------------------------------------------------------------------
+	// */
+	// @TypeOrmManyToMany(() => Tag)
+	// @JoinTable({ name: 'tag_user' })
+	// @MikroOrmManyToMany({
+	// 	entity: () => Tag,
+	// 	pivotTable: 'tag_user',
+	// 	joinColumn: 'userId',
+	// 	inverseJoinColumn: 'tagId'
+	// })
+	// tags?: Tag[];
+
 	/*
 	|--------------------------------------------------------------------------
-	| @OneToOne
+	| Embeddable Columns
 	|--------------------------------------------------------------------------
 	*/
-	@MultiORMOneToOne(() => Profile, (profile) => profile.user, {
-		/** If set to true then it means that related object can be allowed to be inserted or updated in the database. */
-		cascade: true,
-
-		/** Database cascade action on delete. */
-		onDelete: 'SET NULL',
-
-		/** This column is a boolean flag indicating whether the current entity is the 'owning' side of a relationship.  */
-		owner: true
-	})
-	@JoinColumn()
-	profile?: Profile;
+	@EmbeddedColumn(() => CustomFields, { prefix: false })
+	customFields?: CustomFields;
 }

@@ -4,11 +4,12 @@ dotenv.config();
 
 import { Module } from '@nestjs/common';
 import { PostgreSqlDriver } from '@mikro-orm/postgresql';
-import { EntityCaseNamingStrategy } from '@mikro-orm/core';
+import { EntityCaseNamingStrategy, Utils } from '@mikro-orm/core';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
-import { coreEntities } from './core/entities';
-import { coreSubscribers } from './core/entities/subscribers';
+import { SoftDeleteHandler } from 'mikro-orm-soft-delete';
+import { coreEntities } from './../core/entities';
+import { coreSubscribers } from './../core/entities/subscribers';
 import { getLoggingMikroOptions, getLoggingOptions } from './database.helper';
 
 @Module({
@@ -36,7 +37,11 @@ import { getLoggingMikroOptions, getLoggingOptions } from './database.helper';
             password: process.env.DB_PASS || 'root',
             entities: coreEntities,
             subscribers: coreSubscribers,
+            migrations: {
+                path: Utils.detectTsNode() ? 'src/database/migrations' : 'dist/database/migrations',
+            },
             persistOnCreate: true,
+            extensions: [SoftDeleteHandler],
             namingStrategy: EntityCaseNamingStrategy,
             debug: getLoggingMikroOptions(process.env.DB_LOGGING) // by default set to false only
         }),

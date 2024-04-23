@@ -1,5 +1,5 @@
 /* eslint-disable prettier/prettier */
-import { Body, Controller, Get, Post } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Post } from '@nestjs/common';
 import { UserService } from './user.service';
 import { User } from './user.entity';
 
@@ -14,8 +14,9 @@ export class UserController {
     async findAll() {
         return await this._userService.findAll({
             relations: {
-                profile: true,
-                role: true
+                customFields: {
+                    tags: true
+                }
             }
         });
     }
@@ -41,5 +42,11 @@ export class UserController {
     async login(@Body() input: any) {
         const { email, password } = input;
         return await this._userService.login({ email, password });
+    }
+
+    // Delete by ID
+    @Delete(':id')
+    async delete(@Param('id') id: string) {
+        return await this._userService.delete(id);
     }
 }
